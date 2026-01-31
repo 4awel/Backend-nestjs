@@ -1,56 +1,51 @@
 import { Injectable } from '@nestjs/common';
-import { title } from 'process';
+import { PrismaService } from './prisma/prisma.service';
 
-export interface Post {
-  id: string;
-  title: string;
-  body: string;
+export interface PostType {
+  id: number,
+  title: string,
+  body: string,
+  createdAt: Date,
+  updatedAt: Date
 }
 
 @Injectable()
 export class AppService {
-  private posts: Post[] = [];
+  constructor(private prisma: PrismaService) {}
 
   getHello(): string {
     return 'NestJS API is running!';
   }
 
-  getPosts(): Post[] {
-    console.log(`Returning ${this.posts.length} posts`);
-    return this.posts;
+  async getPosts(): Promise<PostType[]> {
+    return (this.prisma as any).post.findMany();
   }
 
-  createPost(data: { title: string; body: string }): Post {
-    const newPost: Post = {
-      id: Date.now().toString(),
-      title: data.title,
-      body: data.body,
-    };
-
-    this.posts.push(newPost);
-    console.log(`Created new post. Total posts: ${this.posts.length}`);
-
-    return newPost;
+  async createPost(data: { title: string; body: string }): Promise<PostType> {
+    return (this.prisma as any).post.create({
+      data: {
+        title: data.title,
+        body: data.body,
+      },
+    });
   }
 
-  deletePost(id: string): { success: boolean; message: string } {
-    this.posts = this.posts.filter(p => p.id !== id);
-    return {
-      success: true,
-      message: `Post with id ${id} deleted successfully`,
-    };
+  async deletePost(id: string): Promise<{ success: boolean }> {
+    await (this.prisma as any).post.delete({
+      where: { id: Number(id) }, // В схеме Int, поэтому приводим к числу
+    });
+    return { success: true };
   }
 
-  changePost(id: string, data: { title: string; body: string }): Post {
-    const indexPost = this.posts.findIndex(p => p.id === id);
-
-    if (data.title !== undefined) {
-      this.posts[indexPost].title = data.title;
-    }
-
-    if (data.body !== undefined) {
-      this.posts[indexPost].body = data.body;
-    }
-    return this.posts[indexPost];
+  async changePost(id: string, data: { title: string; body: string }): Promise<PostType> {
+    return (this.prisma as any).post.update({
+      where: { id: Number(id) },
+      data: {
+        title: data.title,
+        body: data.body,
+      },
+    });
   }
 }
+
+// npx prisma generate --schema=src/prisma/schema.prisma

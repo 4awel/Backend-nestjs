@@ -18,7 +18,7 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   
   // Опционально: middleware для дополнительных CORS заголовков
-  app.use((req, res, next) => {
+  app.use((req: any, res: any, next: any) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     
     res.header('Access-Control-Allow-Origin', 'http://localhost:5173');
